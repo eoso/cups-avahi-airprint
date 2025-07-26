@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 set -x
 
@@ -13,7 +13,7 @@ if [ -z "$CUPSPASSWORD" ]; then
 fi
 
 if [ $(grep -ci $CUPSADMIN /etc/shadow) -eq 0 ]; then
-    adduser -S -G lpadmin --no-create-home $CUPSADMIN
+    adduser --system --ingroup lpadmin --no-create-home $CUPSADMIN
 fi
 echo $CUPSADMIN:$CUPSPASSWORD | chpasswd
 

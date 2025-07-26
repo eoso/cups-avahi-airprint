@@ -1,49 +1,60 @@
-FROM alpine:3.20
+FROM arm64v8/debian:testing-slim
 
-# Install the packages we need. Avahi will be included
-RUN echo -e "https://dl-cdn.alpinelinux.org/alpine/edge/testing\nhttps://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories &&\
-	apk add --update cups \
-	cups-libs \
-	cups-pdf \
-	cups-client \
-	cups-filters \
-	cups-dev \
-	ghostscript \
-	hplip \
-	avahi \
-	inotify-tools \
-	python3 \
-	python3-dev \
-	build-base \
-	wget \
-	rsync \
-	py3-pycups \
-	perl \
-	&& rm -rf /var/cache/apk/*
+# Install Packages (basic tools, cups, basic drivers, HP drivers).
+# See https://wiki.debian.org/CUPSDriverlessPrinting,
+#     https://wiki.debian.org/CUPSPrintQueues
+#     https://wiki.debian.org/CUPSQuickPrintQueues
+# Note: printer-driver-all has been removed from Debian testing,
+#       therefore printer-driver-* packages are manuall added.
+RUN apt-get update \
+&& apt-get install -y \
+  sudo \
+  whois \
+  iproute2 \
+  rsync \
+  usbutils \
+  cups \
+  cups-client \
+  cups-bsd \
+  cups-filters \
+  cups-browsed \
+  python3-cups \
+  ghostscript \
+  polkitd \
+  python-is-python3 \
+  dbus \
+  foomatic-db-engine \
+  foomatic-db-compressed-ppds \
+  openprinting-ppds \
+  hp-ppd \
+  hplip \
+  inotify-tools \
+  printer-driver-hpcups \
+  printer-driver-brlaser \
+  printer-driver-c2050 \
+  printer-driver-c2esp \
+  printer-driver-cjet \
+  printer-driver-dymo \
+  printer-driver-escpr \
+  printer-driver-foo2zjs \
+  printer-driver-fujixerox \
+  printer-driver-m2300w \
+  printer-driver-min12xxw \
+  printer-driver-pnm2ppa \
+  printer-driver-indexbraille \
+  printer-driver-oki \
+  printer-driver-ptouch \
+  printer-driver-pxljr \
+  printer-driver-sag-gdi \
+  printer-driver-splix \
+  printer-driver-cups-pdf \
+  smbclient \
+  avahi-utils \
+  pyenv \
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/*
 
-# Build and install brlaser from source
-RUN apk add --no-cache git cmake && \
-    git clone https://github.com/pdewacht/brlaser.git && \
-    cd brlaser && \
-    cmake . && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf brlaser
-
-# Build and install gutenprint from source
-RUN wget -O gutenprint-5.3.5.tar.xz https://sourceforge.net/projects/gimp-print/files/gutenprint-5.3/5.3.5/gutenprint-5.3.5.tar.xz/download && \
-    tar -xJf gutenprint-5.3.5.tar.xz && \
-    cd gutenprint-5.3.5 && \
-    # Patch to rename conflicting PAGESIZE identifiers to GPT_PAGESIZE in all files in src/testpattern
-    find src/testpattern -type f -exec sed -i 's/\bPAGESIZE\b/GPT_PAGESIZE/g' {} + && \
-    ./configure && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    rm -rf gutenprint-5.3.5 gutenprint-5.3.5.tar.xz && \
-    # Fix cups-genppdupdate script shebang
-    sed -i '1s|.*|#!/usr/bin/perl|' /usr/sbin/cups-genppdupdate
+RUN pyenv install 3.11
 
 # This will use port 631
 EXPOSE 631
@@ -55,6 +66,9 @@ VOLUME /services
 # Add scripts
 ADD root /
 RUN chmod +x /root/*
+
+RUN ["/root/install-hp-plugin.sh"]
+
 
 #Run Script
 CMD ["/root/run_cups.sh"]

@@ -281,7 +281,7 @@ if __name__ == '__main__':
         help="Include the printer specified uri as the adminurl")
     
     (options, args) = parser.parse_args()
-    
+
     # TODO XXX FIXME -- if cups login required, need to add
     # air=username,password
     from getpass import getpass

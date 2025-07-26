@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Function to clean up existing avahi-daemon processes
 cleanup_avahi() {
